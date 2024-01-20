@@ -125,7 +125,7 @@
                 displayValues(x, index, valueFromLeft, valueFromRight);
             }
         });
-        slider.addEventListener("click", (event) => {
+        slider.addEventListener("mousedown", (event) => {
             let rect = slider.getBoundingClientRect();
             let x = event.clientX - rect.left; // x position within the slider.
             let index = Math.floor(x / sliderItemWidth);
