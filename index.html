@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dynamic Slider</title>
+    <link rel="stylesheet" href="/index.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet" />
+</head>
+
+<body>
+    <div class="imv-price-input-container">
+        <form id="slider-form">
+            <label for="input-field">IMV Price</label>
+            <input type="number" id="input-field" value="17006.00" />
+            <svg version="1.0" xmlns="http://www.w3.org/2000/svg" width="12.000000pt" height="12.000000pt"
+                viewBox="0 0 512.000000 512.000000" preserveAspectRatio="xMidYMid meet">
+                <g transform="translate(0.000000,512.000000) scale(0.100000,-0.100000)" fill="#101010" stroke="none">
+                    <path d="M2325 5105 c-22 -8 -41 -15 -43 -15 -2 0 -10 -16 -18 -35 -10 -24
+-14 -77 -15 -177 0 -79 -4 -181 -8 -227 -6 -76 -9 -85 -38 -111 -17 -15 -80
+-46 -139 -70 -232 -89 -365 -170 -500 -305 -198 -198 -294 -443 -294 -756 0
+-287 80 -481 284 -685 175 -174 364 -285 776 -452 352 -144 440 -192 539 -296
+111 -118 136 -266 69 -406 -88 -181 -367 -278 -683 -236 -228 30 -434 91 -660
+195 -115 53 -134 58 -166 41 -31 -17 -55 -76 -118 -294 -77 -264 -86 -314 -67
+-359 43 -103 332 -218 733 -291 79 -15 154 -31 167 -37 43 -20 49 -51 55 -279
+9 -316 -3 -305 331 -305 338 0 323 -15 330 330 3 167 9 247 18 262 22 39 75
+70 177 103 325 105 573 314 715 603 213 434 126 932 -225 1282 -155 156 -329
+255 -760 435 -303 126 -423 192 -514 282 -148 147 -128 348 45 464 94 63 172
+79 374 78 244 -2 409 -36 642 -135 64 -27 131 -49 150 -49 67 0 85 40 188 399
+59 209 60 235 4 287 -57 54 -305 142 -504 179 -187 34 -232 48 -254 78 -19 26
+-22 47 -27 216 -6 210 -18 253 -74 281 -44 22 -433 26 -490 5z" />
+                </g>
+            </svg>
+        </form>
+    </div>
+    <div class="slider-container">
+        <div class="slider">
+            <div class="slider-pointer"></div>
+            <div class="slider-item hard-green">
+                <div class="display-value-container">
+                    <div class="low-bar"></div>
+                    <div class="low">$</div>
+                    <div class="high">$</div>
+                    <div class="high-bar"></div>
+                </div>
+            </div>
+            <div class="slider-item medium-green">
+                <div class="display-value-container">
+                    <div class="low-bar"></div>
+                    <div class="low">$</div>
+                    <div class="high">$</div>
+                    <div class="high-bar"></div>
+                </div>
+            </div>
+            <div class="slider-item light-green">
+                <div class="display-value-container">
+                    <div class="low-bar"></div>
+                    <div class="low">$</div>
+                    <div class="high">$</div>
+                    <div class="high-bar"></div>
+                </div>
+            </div>
+            <div class="slider-item orange">
+                <div class="display-value-container">
+                    <div class="low-bar"></div>
+                    <div class="low">$</div>
+                    <div class="high">$</div>
+                    <div class="high-bar"></div>
+                </div>
+            </div>
+            <div class="slider-item red">
+                <div class="display-value-container">
+                    <div class="low-bar"></div>
+                    <div class="low">$</div>
+                    <div class="high">$</div>
+                    <div class="high-bar"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentSection = 0;
+
+        const slider = document.querySelector(".slider");
+        const sliderPointer = document.querySelector(".slider-pointer");
+        const sliderItems = document.querySelectorAll(".slider-item");
+        const sliderContainer = document.querySelector(".slider-container");
+        const priceInput = document.querySelector(
+            ".imv-price-input-container input"
+        );
+
+        const sliderWidth = slider.offsetWidth;
+        const sliderItemWidth = sliderItems[0].offsetWidth;
+        const sliderItemsCount = sliderItems.length;
+        const sliderPointerWidth = sliderPointer.offsetWidth;
+        const sliderItemsValues = [
+            { low: 12635, high: 15519 },
+            { low: 15519, high: 16670 },
+            { low: 16670, high: 16997 },
+            { low: 16997, high: 18055 },
+            { low: 18055, high: 19249 },
+        ];
+
+        let isDragging = false;
+
+        sliderPointer.addEventListener("mousedown", () => {
+            isDragging = true;
+            sliderPointer.style.transition = "none";
+        });
+
+        slider.addEventListener("mousemove", (event) => {
+            if (isDragging) {
+                let rect = slider.getBoundingClientRect();
+                let x = event.clientX - rect.left;
+                let index = Math.floor(x / sliderItemWidth);
+                let valueRange = sliderItemsValues[index];
+                let valuePerPx = (valueRange.high - valueRange.low) / sliderItemWidth;
+                let itemX = x - index * sliderItemWidth; // x position within the item.
+                let valueFromLeft = itemX * valuePerPx;
+                let valueFromRight = valueRange.high - valueRange.low - valueFromLeft;
+                sliderPointer.style.transition = "none"; // Disable transition while dragging
+                moveSliderPointer(x);
+                displayValues(x, index, valueFromLeft, valueFromRight);
+            }
+        });
+        slider.addEventListener("click", (event) => {
+            let rect = slider.getBoundingClientRect();
+            let x = event.clientX - rect.left; // x position within the slider.
+            let index = Math.floor(x / sliderItemWidth);
+            let valueRange = sliderItemsValues[index];
+            let valuePerPx = (valueRange.high - valueRange.low) / sliderItemWidth;
+            let itemX = x - index * sliderItemWidth; // x position within the item.
+            let valueFromLeft = itemX * valuePerPx;
+            let valueFromRight = valueRange.high - valueRange.low - valueFromLeft;
+            moveSliderPointer(x);
+            displayValues(x, index, valueFromLeft, valueFromRight);
+        });
+
+        slider.addEventListener("mouseup", () => {
+            isDragging = false;
+            sliderPointer.style.transition = "all 0.2s"; // Enable transition when mouse is released
+        });
+        slider.addEventListener("mouseleave", (event) => {
+            if (isDragging) {
+                let rect = slider.getBoundingClientRect();
+                let x = event.clientX - rect.left;
+                moveSliderPointer(x);
+            }
+        });
+        sliderContainer.addEventListener("mouseup", () => {
+            if (isDragging) {
+                isDragging = false;
+                sliderPointer.style.transition = "all 0.2s"; // Enable transition when mouse is released
+            }
+        });
+
+        function updateInputValue(x) {
+            const totalWidth = slider.clientWidth;
+            const percentage = x / totalWidth;
+            const index = Math.floor(percentage * sliderItemsValues.length);
+
+            // Interpolate the input value based on the slider position
+            const minValue = sliderItemsValues[index].low;
+            const maxValue = sliderItemsValues[index].high;
+            const valuePerPx =
+                (maxValue - minValue) / sliderItems[index].clientWidth;
+            const itemX = x - index * sliderItems[index].clientWidth;
+            const interpolatedValue = minValue + itemX * valuePerPx;
+
+            // Set the input value
+            priceInput.value = interpolatedValue.toFixed(2);
+        }
+
+        function moveSliderPointer(x) {
+            sliderPointer.style.transform = `translate(${x}px, -20%)`;
+            updateInputValue(x);
+        }
+        function displayValues(x, index, valueFromLeft, valueFromRight) {
+            let displayValueContainers = document.querySelectorAll('.display-value-container');
+            let rect = sliderItems[index].getBoundingClientRect();
+            let sliderRect = slider.getBoundingClientRect();
+            let itemX = rect.left - sliderRect.left;
+            let width = rect.right - rect.left;
+            displayValueContainers.forEach((container, i) => {
+                if (i === index && x >= itemX && x <= itemX + width) {
+                    container.style.opacity = '1';
+                    container.classList.add('active-display');
+                    let lowElement = container.querySelector('.low');
+                    let highElement = container.querySelector('.high');
+
+                    // Update the low and high values based on the sliderItemsValues
+                    lowElement.textContent = `$${sliderItemsValues[i].low.toFixed(2)}`;
+                    highElement.textContent = `$${sliderItemsValues[i].high.toFixed(2)}`;
+                } else {
+                    container.style.opacity = '0';
+                    container.classList.remove('active-display');
+                }
+            });
+
+            updateInputValue(x);
+        }
+
+        let displayContainers = document.querySelectorAll(
+            ".display-value-container"
+        );
+        const form = document.querySelector("#slider-form");
+        const input = document.querySelector(".imv-price-input-container input");
+
+        form.addEventListener("submit", (event) => {
+            event.preventDefault();
+
+            let inputValue = Number(input.value);
+
+            // Error handling for unexpected inputs
+            if (isNaN(inputValue)) {
+                input.setCustomValidity("Input value is not a number");
+                input.reportValidity();
+                return;
+            }
+
+            let minValue = sliderItemsValues[0].low;
+            let maxValue = sliderItemsValues[sliderItemsValues.length - 1].high;
+
+            if (inputValue < minValue) {
+                moveSliderPointer(0); // Move pointer to the start
+                displayValues(0, 0, 0, sliderItemsValues[0].high - minValue);
+            } else if (inputValue > maxValue) {
+                moveSliderPointer(slider.clientWidth); // Move pointer to the end
+                displayValues(
+                    slider.clientWidth - 1,
+                    sliderItemsValues.length - 1,
+                    maxValue - sliderItemsValues[sliderItemsValues.length - 1].low,
+                    0
+                );
+            } else {
+                // Find the correct position for the input value
+                let accumulatedWidth = 0;
+                for (let i = 0; i < sliderItemsValues.length; i++) {
+                    if (
+                        inputValue >= sliderItemsValues[i].low &&
+                        inputValue <= sliderItemsValues[i].high
+                    ) {
+                        let widthPosition =
+                            (inputValue - sliderItemsValues[i].low) /
+                            (sliderItemsValues[i].high - sliderItemsValues[i].low);
+                        let pointerPosition =
+                            accumulatedWidth + widthPosition * sliderItems[i].clientWidth;
+                        moveSliderPointer(pointerPosition);
+
+                        // Calculate valueFromLeft and valueFromRight
+                        let valueFromLeft = inputValue - sliderItemsValues[i].low;
+                        let valueFromRight = sliderItemsValues[i].high - inputValue;
+
+                        displayValues(pointerPosition, i, valueFromLeft, valueFromRight);
+
+                        break;
+                    } else {
+                        accumulatedWidth += sliderItems[i].clientWidth;
+                    }
+                }
+            }
+        });
+
+
+
+        // Set initial slider position based on the initial input value
+        const initialInputValue = Number(priceInput.value.replace("$", ""));
+        for (let i = 0; i < sliderItemsValues.length; i++) {
+            if (initialInputValue >= sliderItemsValues[i].low && initialInputValue <= sliderItemsValues[i].high) {
+                const widthPosition = (initialInputValue - sliderItemsValues[i].low) / (sliderItemsValues[i].high - sliderItemsValues[i].low);
+                const initialSliderPosition = i * sliderItemWidth + widthPosition * sliderItemWidth;
+                moveSliderPointer(initialSliderPosition);
+                displayValues(initialSliderPosition, i, initialInputValue - sliderItemsValues[i].low, sliderItemsValues[i].high - initialInputValue);
+                break;
+            }
+        }
+
+
+
+
+        document.addEventListener('mousemove', (event) => {
+            if (isDragging) {
+                let rect = slider.getBoundingClientRect();
+                let x = event.clientX - rect.left;
+                x = Math.max(0, Math.min(x, slider.clientWidth)); // Ensure x is within the bounds of the slider
+                let index = Math.floor(x / sliderItemWidth);
+                let valueRange = sliderItemsValues[index];
+                let valuePerPx = (valueRange.high - valueRange.low) / sliderItemWidth;
+                let itemX = x - index * sliderItemWidth;
+                let valueFromLeft = itemX * valuePerPx;
+                let valueFromRight = valueRange.high - valueRange.low - valueFromLeft;
+                sliderPointer.style.transition = 'none';
+                moveSliderPointer(x);
+                displayValues(x, index, valueFromLeft, valueFromRight);
+            }
+        });
+
+        document.addEventListener("mouseup", () => {
+            if (isDragging) {
+                isDragging = false;
+                sliderPointer.style.transition = 'all 0.2s';
+            }
+        });
+
+        document.addEventListener("mouseleave", (event) => {
+            if (isDragging) {
+                let rect = slider.getBoundingClientRect();
+                let x = event.clientX - rect.left;
+                x = Math.max(0, Math.min(x, slider.clientWidth)); // Ensure x is within the bounds of the slider
+                moveSliderPointer(x);
+            }
+        });
+    </script>
+</body>
+
+</html>
