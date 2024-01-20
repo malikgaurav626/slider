@@ -13,7 +13,7 @@
     <div class="imv-price-input-container">
         <form id="slider-form">
             <label for="input-field">IMV Price</label>
-            <input type="number" id="input-field" value="17004.99" />
+            <input type="number" id="input-field" value="17006" />
             <svg version="1.0" xmlns="http://www.w3.org/2000/svg" width="12.000000pt" height="12.000000pt"
                 viewBox="0 0 512.000000 512.000000" preserveAspectRatio="xMidYMid meet">
                 <g transform="translate(0.000000,512.000000) scale(0.100000,-0.100000)" fill="#101010" stroke="none">
@@ -102,6 +102,17 @@
         let sliderItemWidth = sliderWidth / sliderItemsValues.length;
         let sliderItemsCount = sliderItems.length;
         let sliderPointerWidth = sliderPointer.offsetWidth;
+        // Set initial slider position based on the initial input value
+        const initialInputValue = Number(priceInput.value);
+        for (let i = 0; i < sliderItemsValues.length; i++) {
+            if (initialInputValue >= sliderItemsValues[i].low && initialInputValue <= sliderItemsValues[i].high) {
+                const widthPosition = (initialInputValue - sliderItemsValues[i].low) / (sliderItemsValues[i].high - sliderItemsValues[i].low);
+                const initialSliderPosition = i * sliderItemWidth + widthPosition * sliderItemWidth - 0.257;
+                moveSliderPointer(initialSliderPosition);
+                displayValues(initialSliderPosition, i, initialInputValue - sliderItemsValues[i].low, sliderItemsValues[i].high - initialInputValue, 0);
+                break;
+            }
+        }
 
 
         let isDragging = false;
@@ -223,6 +234,21 @@
 
             let inputValue = Number(input.value);
 
+            if (!inputValue) {
+                input.setCustomValidity("Enter valid amount between 12365 & 19249");
+                input.reportValidity();
+                return
+            }
+            if (inputValue < 12365) {
+                input.setCustomValidity("Enter valid amount between 12365 & 19249");
+                input.reportValidity();
+                return;
+            }
+            if (inputValue > 19249) {
+                input.setCustomValidity("Enter valid amount between 12365 & 19249");
+                input.reportValidity();
+                return;
+            }
             // Error handling for unexpected inputs
             if (isNaN(inputValue)) {
                 input.setCustomValidity("Input value is not a number");
@@ -239,7 +265,7 @@
             } else if (inputValue > maxValue) {
                 moveSliderPointer(slider.clientWidth); // Move pointer to the end
                 displayValues(
-                    slider.clientWidth - 1,
+                    slider.clientWidth,
                     sliderItemsValues.length - 1,
                     maxValue - sliderItemsValues[sliderItemsValues.length - 1].low,
                     0, 0
@@ -275,17 +301,7 @@
 
 
 
-        // Set initial slider position based on the initial input value
-        const initialInputValue = Number(priceInput.value);
-        for (let i = 0; i < sliderItemsValues.length; i++) {
-            if (initialInputValue >= sliderItemsValues[i].low && initialInputValue <= sliderItemsValues[i].high) {
-                const widthPosition = (initialInputValue - sliderItemsValues[i].low) / (sliderItemsValues[i].high - sliderItemsValues[i].low);
-                const initialSliderPosition = i * sliderItemWidth + widthPosition * sliderItemWidth;
-                moveSliderPointer(initialSliderPosition);
-                displayValues(initialSliderPosition, i, initialInputValue - sliderItemsValues[i].low, sliderItemsValues[i].high - initialInputValue, 0);
-                break;
-            }
-        }
+
 
 
 

@@ -64,8 +64,10 @@ body{
     bottom: -35px;
     transition: 0.2s all;
     font-family: 'Roboto', Helvetica;
+    font-weight: lighter;
     color: rgb(54, 132, 250);
     opacity: 0;
+
 }
 .active-display{
     opacity: 1;
