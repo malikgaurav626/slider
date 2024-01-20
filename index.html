@@ -13,7 +13,7 @@
     <div class="imv-price-input-container">
         <form id="slider-form">
             <label for="input-field">IMV Price</label>
-            <input type="number" id="input-field" value="17006.00" />
+            <input type="number" id="input-field" value="17004.99" />
             <svg version="1.0" xmlns="http://www.w3.org/2000/svg" width="12.000000pt" height="12.000000pt"
                 viewBox="0 0 512.000000 512.000000" preserveAspectRatio="xMidYMid meet">
                 <g transform="translate(0.000000,512.000000) scale(0.100000,-0.100000)" fill="#101010" stroke="none">
@@ -91,10 +91,6 @@
             ".imv-price-input-container input"
         );
 
-        let sliderWidth = slider.offsetWidth;
-        let sliderItemWidth = sliderItems[0].offsetWidth;
-        let sliderItemsCount = sliderItems.length;
-        let sliderPointerWidth = sliderPointer.offsetWidth;
         let sliderItemsValues = [
             { low: 12635, high: 15519 },
             { low: 15519, high: 16670 },
@@ -102,6 +98,11 @@
             { low: 16997, high: 18055 },
             { low: 18055, high: 19249 },
         ];
+        let sliderWidth = slider.getBoundingClientRect().width;
+        let sliderItemWidth = sliderWidth / sliderItemsValues.length;
+        let sliderItemsCount = sliderItems.length;
+        let sliderPointerWidth = sliderPointer.offsetWidth;
+
 
         let isDragging = false;
 
@@ -158,7 +159,7 @@
         });
 
         function updateInputValue(x) {
-            const totalWidth = slider.clientWidth;
+            const totalWidth = sliderWidth;
             const percentage = x / totalWidth;
             const index = Math.floor(percentage * sliderItemsValues.length);
 
@@ -175,7 +176,7 @@
         }
 
         function moveSliderPointer(x, from = 0) {
-            if (x >= slider.clientWidth) sliderPointer.style.transform = `translate(${slider.clientWidth - 1}px, -20%)`;
+            if (x > slider.clientWidth) sliderPointer.style.transform = `translate(${slider.clientWidth}px, -20%)`;
             sliderPointer.style.transform = `translate(${x}px, -20%)`;
             if (from == 0) updateInputValue(x);
         }
@@ -185,6 +186,7 @@
             let sliderRect = slider.getBoundingClientRect();
             let itemX = rect.left - sliderRect.left;
             let width = rect.right - rect.left;
+
             displayValueContainers.forEach((container, i) => {
                 if (i === index && x >= itemX && x <= itemX + width) {
                     container.style.opacity = '1';
@@ -192,9 +194,14 @@
                     let lowElement = container.querySelector('.low');
                     let highElement = container.querySelector('.high');
 
+                    // Calculate the index for the left and right values
+                    const leftIndex = Math.max(0, index - 1);
+                    const rightIndex = Math.min(sliderItemsValues.length - 1, index + 1);
+
                     // Update the low and high values based on the sliderItemsValues
-                    lowElement.textContent = `$${sliderItemsValues[i].low.toFixed(2)}`;
-                    highElement.textContent = `$${sliderItemsValues[i].high.toFixed(2)}`;
+
+                    lowElement.textContent = `- $${valueFromLeft.toFixed(2)}`;
+                    highElement.textContent = `$${valueFromRight.toFixed(2)}`;
                 } else {
                     container.style.opacity = '0';
                     container.classList.remove('active-display');
@@ -203,6 +210,7 @@
 
             if (from == 0) updateInputValue(x);
         }
+
 
         let displayContainers = document.querySelectorAll(
             ".display-value-container"
@@ -268,7 +276,7 @@
 
 
         // Set initial slider position based on the initial input value
-        const initialInputValue = Number(priceInput.value.replace("$", ""));
+        const initialInputValue = Number(priceInput.value);
         for (let i = 0; i < sliderItemsValues.length; i++) {
             if (initialInputValue >= sliderItemsValues[i].low && initialInputValue <= sliderItemsValues[i].high) {
                 const widthPosition = (initialInputValue - sliderItemsValues[i].low) / (sliderItemsValues[i].high - sliderItemsValues[i].low);
@@ -319,7 +327,7 @@
 
         window.addEventListener('resize', () => {
             // Recalculate dimensions
-            const newSliderWidth = slider.clientWidth;
+            const newSliderWidth = slider.getBoundingClientRect().width;
             const newSliderItemWidth = newSliderWidth / sliderItemsValues.length;
             sliderItemWidth = newSliderItemWidth;
             sliderWidth = newSliderWidth;
@@ -344,6 +352,78 @@
             moveSliderPointer(newSliderPosition, 1);
             displayValues(newSliderPosition, newIndex, currentInputValue - sliderItemsValues[newIndex].low, sliderItemsValues[newIndex].high - currentInputValue, 1);
         });
+
+
+
+
+
+        //mobile scripts DO NOT CHANGE
+
+        // Add touch event listeners
+        sliderPointer.addEventListener("touchstart", (event) => {
+            isDragging = true;
+            sliderPointer.style.transition = "none";
+        });
+
+        slider.addEventListener("touchmove", (event) => {
+            if (isDragging) {
+                let rect = slider.getBoundingClientRect();
+                let x = event.touches[0].clientX - rect.left;
+                let index = Math.floor(x / sliderItemWidth);
+                let valueRange = sliderItemsValues[index];
+                let valuePerPx = (valueRange.high - valueRange.low) / sliderItemWidth;
+                let itemX = x - index * sliderItemWidth;
+                let valueFromLeft = itemX * valuePerPx;
+                let valueFromRight = valueRange.high - valueRange.low - valueFromLeft;
+                sliderPointer.style.transition = "none";
+                moveSliderPointer(x);
+                displayValues(x, index, valueFromLeft, valueFromRight);
+            }
+        });
+
+        slider.addEventListener("touchend", () => {
+            isDragging = false;
+            sliderPointer.style.transition = "all 0.2s";
+        });
+
+        sliderContainer.addEventListener("touchend", () => {
+            if (isDragging) {
+                isDragging = false;
+                sliderPointer.style.transition = "all 0.2s";
+            }
+        });
+
+        document.addEventListener('touchmove', (event) => {
+            if (isDragging) {
+                let rect = slider.getBoundingClientRect();
+                let x = event.touches[0].clientX - rect.left;
+                x = Math.max(0, Math.min(x, slider.clientWidth));
+                let index = Math.floor(x / sliderItemWidth);
+                let valueRange = sliderItemsValues[index];
+                let valuePerPx = (valueRange.high - valueRange.low) / sliderItemWidth;
+                let itemX = x - index * sliderItemWidth;
+                let valueFromLeft = itemX * valuePerPx;
+                let valueFromRight = valueRange.high - valueRange.low - valueFromLeft;
+                sliderPointer.style.transition = 'none';
+                moveSliderPointer(x);
+                displayValues(x, index, valueFromLeft, valueFromRight);
+            }
+        });
+
+        document.addEventListener("touchend", () => {
+            if (isDragging) {
+                isDragging = false;
+                sliderPointer.style.transition = 'all 0.2s';
+            }
+        });
+
+        document.addEventListener("touchcancel", () => {
+            if (isDragging) {
+                isDragging = false;
+                sliderPointer.style.transition = 'all 0.2s';
+            }
+        });
+
     </script>
 </body>
 
