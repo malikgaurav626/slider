@@ -91,11 +91,11 @@
             ".imv-price-input-container input"
         );
 
-        const sliderWidth = slider.offsetWidth;
-        const sliderItemWidth = sliderItems[0].offsetWidth;
-        const sliderItemsCount = sliderItems.length;
-        const sliderPointerWidth = sliderPointer.offsetWidth;
-        const sliderItemsValues = [
+        let sliderWidth = slider.offsetWidth;
+        let sliderItemWidth = sliderItems[0].offsetWidth;
+        let sliderItemsCount = sliderItems.length;
+        let sliderPointerWidth = sliderPointer.offsetWidth;
+        let sliderItemsValues = [
             { low: 12635, high: 15519 },
             { low: 15519, high: 16670 },
             { low: 16670, high: 16997 },
@@ -125,6 +125,7 @@
                 displayValues(x, index, valueFromLeft, valueFromRight);
             }
         });
+
         slider.addEventListener("mousedown", (event) => {
             let rect = slider.getBoundingClientRect();
             let x = event.clientX - rect.left; // x position within the slider.
@@ -173,11 +174,12 @@
             priceInput.value = interpolatedValue.toFixed(2);
         }
 
-        function moveSliderPointer(x) {
+        function moveSliderPointer(x, from = 0) {
+            if (x >= slider.clientWidth) sliderPointer.style.transform = `translate(${slider.clientWidth - 1}px, -20%)`;
             sliderPointer.style.transform = `translate(${x}px, -20%)`;
-            updateInputValue(x);
+            if (from == 0) updateInputValue(x);
         }
-        function displayValues(x, index, valueFromLeft, valueFromRight) {
+        function displayValues(x, index, valueFromLeft, valueFromRight, from = 0) {
             let displayValueContainers = document.querySelectorAll('.display-value-container');
             let rect = sliderItems[index].getBoundingClientRect();
             let sliderRect = slider.getBoundingClientRect();
@@ -199,7 +201,7 @@
                 }
             });
 
-            updateInputValue(x);
+            if (from == 0) updateInputValue(x);
         }
 
         let displayContainers = document.querySelectorAll(
@@ -225,14 +227,14 @@
 
             if (inputValue < minValue) {
                 moveSliderPointer(0); // Move pointer to the start
-                displayValues(0, 0, 0, sliderItemsValues[0].high - minValue);
+                displayValues(0, 0, 0, sliderItemsValues[0].high - minValue, 0);
             } else if (inputValue > maxValue) {
                 moveSliderPointer(slider.clientWidth); // Move pointer to the end
                 displayValues(
                     slider.clientWidth - 1,
                     sliderItemsValues.length - 1,
                     maxValue - sliderItemsValues[sliderItemsValues.length - 1].low,
-                    0
+                    0, 0
                 );
             } else {
                 // Find the correct position for the input value
@@ -253,7 +255,7 @@
                         let valueFromLeft = inputValue - sliderItemsValues[i].low;
                         let valueFromRight = sliderItemsValues[i].high - inputValue;
 
-                        displayValues(pointerPosition, i, valueFromLeft, valueFromRight);
+                        displayValues(pointerPosition, i, valueFromLeft, valueFromRight, 0);
 
                         break;
                     } else {
@@ -272,7 +274,7 @@
                 const widthPosition = (initialInputValue - sliderItemsValues[i].low) / (sliderItemsValues[i].high - sliderItemsValues[i].low);
                 const initialSliderPosition = i * sliderItemWidth + widthPosition * sliderItemWidth;
                 moveSliderPointer(initialSliderPosition);
-                displayValues(initialSliderPosition, i, initialInputValue - sliderItemsValues[i].low, sliderItemsValues[i].high - initialInputValue);
+                displayValues(initialSliderPosition, i, initialInputValue - sliderItemsValues[i].low, sliderItemsValues[i].high - initialInputValue, 0);
                 break;
             }
         }
@@ -293,7 +295,7 @@
                 let valueFromRight = valueRange.high - valueRange.low - valueFromLeft;
                 sliderPointer.style.transition = 'none';
                 moveSliderPointer(x);
-                displayValues(x, index, valueFromLeft, valueFromRight);
+                displayValues(x, index, valueFromLeft, valueFromRight, 0);
             }
         });
 
@@ -311,6 +313,36 @@
                 x = Math.max(0, Math.min(x, slider.clientWidth)); // Ensure x is within the bounds of the slider
                 moveSliderPointer(x);
             }
+        });
+
+
+
+        window.addEventListener('resize', () => {
+            // Recalculate dimensions
+            const newSliderWidth = slider.clientWidth;
+            const newSliderItemWidth = newSliderWidth / sliderItemsValues.length;
+            sliderItemWidth = newSliderItemWidth;
+            sliderWidth = newSliderWidth;
+
+            // Get the current input value
+            const currentInputValue = parseFloat(priceInput.value.replace(/[^\d.-]/g, '')) || 0;
+
+            // Find the corresponding slider item index for the current input value
+            let newIndex = 0;
+            for (let i = 0; i < sliderItemsValues.length; i++) {
+                if (currentInputValue >= sliderItemsValues[i].low && currentInputValue <= sliderItemsValues[i].high) {
+                    newIndex = i;
+                    break;
+                }
+            }
+
+            // Calculate the new slider position based on the current input value and slider item widths
+            const widthPosition = (currentInputValue - sliderItemsValues[newIndex].low) / (sliderItemsValues[newIndex].high - sliderItemsValues[newIndex].low);
+            const newSliderPosition = newIndex * newSliderItemWidth + widthPosition * newSliderItemWidth;
+
+            // Update slider pointer and display values
+            moveSliderPointer(newSliderPosition, 1);
+            displayValues(newSliderPosition, newIndex, currentInputValue - sliderItemsValues[newIndex].low, sliderItemsValues[newIndex].high - currentInputValue, 1);
         });
     </script>
 </body>
